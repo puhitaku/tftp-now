@@ -43,7 +43,7 @@ func main() {
 }
 
 func main_() int {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).Level(zerolog.InfoLevel)
 
 	if len(os.Args) < 2 {
 		fmt.Print(usage)
@@ -56,10 +56,15 @@ func main_() int {
 		host := serverCmd.String("host", "0.0.0.0", "Host address")
 		port := serverCmd.Int("port", 69, "Port number")
 		root := serverCmd.String("root", ".", "Root directory path")
+		verbose := serverCmd.Bool("verbose", false, "Enable verbose debug output")
 
 		err := serverCmd.Parse(os.Args[2:])
 		if err != nil {
 			log.Panic().Msgf("failed to parse args: %s", err)
+		}
+
+		if *verbose {
+			log.Logger = log.Logger.Level(zerolog.DebugLevel)
 		}
 
 		abs, err := filepath.Abs(*root)
