@@ -5,7 +5,7 @@
 
 # tl;dr
 
-1. Download the latest executable
+1. Download the latest executable.
 
     - Linux [amd64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-amd64) /
             [arm](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-arm) /
@@ -15,6 +15,12 @@
             [arm64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-darwin-arm64)
     - Windows [amd64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-windows-amd64.exe) /
               [arm64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-windows-arm64.exe)
+
+1. Make it executable.
+
+   ```
+   $ chmod +x tftp-now-darwin-arm64  # example for macOS
+   ```
 
 1. Run it.
 
