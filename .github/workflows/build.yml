@@ -1,0 +1,62 @@
+name: Build and Release
+
+on:
+  push:
+    branches: ci*
+    tags: '*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: true
+
+  build-and-release:
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    strategy:
+      matrix:
+        os: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        include:
+          - os: linux
+            goarch: riscv64
+          - os: linux
+            goarch: arm
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.20.x'
+    - name: Build
+      env:
+        GOOS: ${{ matrix.os }}
+        GOARCH: ${{ matrix.goarch }}
+      run: |
+        go env
+        go version
+        go build -o tftp-now-${{ matrix.os }}-${{ matrix.GOARCH }}${{ matrix.os == 'windows' && '.exe' || '' }} .
+    - name: Upload Release Asset
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: tftp-now-${{ matrix.os }}-${{ matrix.GOARCH }}${{ matrix.os == 'windows' && '.exe' || '' }}
+        asset_name: tftp-now-${{ matrix.os }}-${{ matrix.GOARCH }}${{ matrix.os == 'windows' && '.exe' || ''  }}
+        asset_content_type: application/octet-stream
+
