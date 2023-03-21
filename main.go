@@ -102,13 +102,6 @@ func main_() int {
 			return 1
 		}
 
-		file, err := os.Create(*output)
-		if err != nil {
-			log.Error().Msgf("failed to open '%s' to write: %s", *output, err)
-			return 1
-		}
-		defer file.Close()
-
 		cli, err := tftp.NewClient(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
 			log.Error().Msgf("failed to create a new client: %s", err)
@@ -120,6 +113,13 @@ func main_() int {
 			log.Error().Msgf("failed to receive '%s': %s", *path, err)
 			return 1
 		}
+
+		file, err := os.Create(*output)
+		if err != nil {
+			log.Error().Msgf("failed to open '%s' to write: %s", *output, err)
+			return 1
+		}
+		defer file.Close()
 
 		n, err := tf.WriteTo(file)
 		if err != nil {
