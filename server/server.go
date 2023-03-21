@@ -56,7 +56,7 @@ func WriteHandler(filename string, wt io.WriterTo) error {
 
 	log.Debug().Str("requestId", reqID).Msgf("evaluated path: %s", evalPath)
 
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+	file, err := os.OpenFile(evalPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
 	if err != nil {
 		log.Error().Str("requestId", reqID).Msgf("failed to open the file: %s", err)
 		return err
