@@ -60,7 +60,8 @@ func main_() int {
 
 		err := serverCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic().Msgf("failed to parse args: %s", err)
+			log.Error().Msgf("failed to parse args: %s", err)
+			return 1
 		}
 
 		if *verbose {
@@ -69,7 +70,8 @@ func main_() int {
 
 		abs, err := filepath.Abs(*root)
 		if err != nil {
-			log.Panic().Msgf("failed to get the absolute path: %s", err)
+			log.Error().Msgf("failed to get the absolute path: %s", err)
+			return 1
 		}
 
 		server.SetRoot(abs)
@@ -79,7 +81,7 @@ func main_() int {
 		log.Info().Str("host", *host).Int("port", *port).Str("directory", abs).Msg("TFTP server is up")
 		err = s.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
-			log.Err(err)
+			log.Error().Msgf("failed to run the server: %s", err)
 			return 1
 		}
 	case "read":
@@ -96,14 +98,15 @@ func main_() int {
 
 		err := clientCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic().Msgf("failed to parse args: %s", err)
+			log.Error().Msgf("failed to parse args: %s", err)
+			return 1
 		}
 
 		if *remote == "" {
-			log.Fatal().Msgf("please specify '-remote'")
+			log.Error().Msgf("please specify '-remote'")
 			return 1
 		} else if *local == "" {
-			log.Fatal().Msgf("please specify '-local'")
+			log.Error().Msgf("please specify '-local'")
 			return 1
 		}
 
@@ -147,7 +150,8 @@ func main_() int {
 
 		err := clientCmd.Parse(os.Args[2:])
 		if err != nil {
-			log.Panic().Msgf("failed to parse args: %s", err)
+			log.Error().Msgf("failed to parse args: %s", err)
+			return 1
 		}
 
 		file, err := os.Open(*local)
