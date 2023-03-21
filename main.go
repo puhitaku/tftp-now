@@ -78,7 +78,7 @@ func main_() int {
 		s := tftp.NewServer(server.ReadHandler, server.WriteHandler)
 		s.SetTimeout(5 * time.Second)
 
-		log.Info().Str("host", *host).Int("port", *port).Str("directory", abs).Msg("TFTP server is up")
+		log.Info().Str("host", *host).Int("port", *port).Str("directory", abs).Msg("starting the TFTP server")
 		err = s.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
 			log.Error().Msgf("failed to run the server: %s", err)
