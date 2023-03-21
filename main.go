@@ -32,10 +32,10 @@ Example (serve): start serving on 0.0.0.0:69
   $ tftp-now serve
 
 Example (read): receive '{server root}/dir/foo' from 192.168.1.1 and save it to 'bar'.
-  $ tftp-now read -host 192.168.1.1 -path dir/foo -output bar
+  $ tftp-now read -host 192.168.1.1 -remote dir/foo -local bar
 
 Example (write): send 'bar' to '{server root}/dir/foo' of 192.168.1.1.
-  $ tftp-now write -host 192.168.1.1 -path dir/foo -input bar
+  $ tftp-now write -host 192.168.1.1 -remote dir/foo -local bar
 `
 
 func main() {
@@ -55,7 +55,7 @@ func main_() int {
 		serverCmd := flag.NewFlagSet("tftp-now serve [<options>]", flag.ExitOnError)
 		host := serverCmd.String("host", "0.0.0.0", "Host address")
 		port := serverCmd.Int("port", 69, "Port number")
-		root := serverCmd.String("root", ".", "Directory path")
+		root := serverCmd.String("root", ".", "Root directory path")
 
 		err := serverCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -81,8 +81,8 @@ func main_() int {
 		clientCmd := flag.NewFlagSet("tftp-now read [<options>]", flag.ExitOnError)
 		host := clientCmd.String("host", "127.0.0.1", "Host address")
 		port := clientCmd.Int("port", 69, "Port number")
-		path := clientCmd.String("path", "", "Remote file path to read from (REQUIRED)")
-		output := clientCmd.String("output", "", "Local file path to save to (REQUIRED)")
+		remote := clientCmd.String("remote", "", "Remote file path to read from (REQUIRED)")
+		local := clientCmd.String("local", "", "Local file path to save to (REQUIRED)")
 
 		if len(os.Args) < 2 {
 			clientCmd.Usage()
@@ -94,11 +94,11 @@ func main_() int {
 			log.Panic().Msgf("failed to parse args: %s", err)
 		}
 
-		if *path == "" {
-			log.Fatal().Msgf("please specify '-path'")
+		if *remote == "" {
+			log.Fatal().Msgf("please specify '-remote'")
 			return 1
-		} else if *output == "" {
-			log.Fatal().Msgf("please specify '-output'")
+		} else if *local == "" {
+			log.Fatal().Msgf("please specify '-local'")
 			return 1
 		}
 
@@ -108,22 +108,22 @@ func main_() int {
 			return 1
 		}
 
-		tf, err := cli.Receive(*path, "octet")
+		tf, err := cli.Receive(*remote, "octet")
 		if err != nil {
-			log.Error().Msgf("failed to receive '%s': %s", *path, err)
+			log.Error().Msgf("failed to receive '%s': %s", *remote, err)
 			return 1
 		}
 
-		file, err := os.Create(*output)
+		file, err := os.Create(*local)
 		if err != nil {
-			log.Error().Msgf("failed to open '%s' to write: %s", *output, err)
+			log.Error().Msgf("failed to open '%s' to write: %s", *local, err)
 			return 1
 		}
 		defer file.Close()
 
 		n, err := tf.WriteTo(file)
 		if err != nil {
-			log.Error().Msgf("failed to write the received data to '%s': %s", *output, err)
+			log.Error().Msgf("failed to write the received data to '%s': %s", *local, err)
 			return 1
 		}
 
@@ -132,8 +132,8 @@ func main_() int {
 		clientCmd := flag.NewFlagSet("tftp-now write [<options>]", flag.ExitOnError)
 		host := clientCmd.String("host", "127.0.0.1", "Host address")
 		port := clientCmd.Int("port", 69, "Port number")
-		path := clientCmd.String("path", "", "Remote file path to save to (REQUIRED)")
-		input := clientCmd.String("input", "", "Local file path to read from (REQUIRED")
+		remote := clientCmd.String("remote", "", "Remote file path to save to (REQUIRED)")
+		local := clientCmd.String("local", "", "Local file path to read from (REQUIRED")
 
 		if len(os.Args) < 2 {
 			clientCmd.Usage()
@@ -145,9 +145,9 @@ func main_() int {
 			log.Panic().Msgf("failed to parse args: %s", err)
 		}
 
-		file, err := os.Open(*input)
+		file, err := os.Open(*local)
 		if err != nil {
-			log.Error().Msgf("failed to open '%s' to write: %s", *input, err)
+			log.Error().Msgf("failed to open '%s' to write: %s", *local, err)
 			return 1
 		}
 		defer file.Close()
@@ -158,15 +158,15 @@ func main_() int {
 			return 1
 		}
 
-		rf, err := cli.Send(*path, "octet")
+		rf, err := cli.Send(*remote, "octet")
 		if err != nil {
-			log.Error().Msgf("failed to send '%s': %s", *path, err)
+			log.Error().Msgf("failed to send '%s': %s", *remote, err)
 			return 1
 		}
 
 		n, err := rf.ReadFrom(file)
 		if err != nil {
-			log.Error().Msgf("failed to read the sending data from '%s': %s", *input, err)
+			log.Error().Msgf("failed to read the sending data from '%s': %s", *local, err)
 			return 1
 		}
 
