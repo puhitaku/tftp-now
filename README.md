@@ -25,8 +25,8 @@
 1. Run it.
 
     1. As a server: `tftp-now-{OS}-{ARCH} serve`
-    1. As a client, to read (receive): `tftp-now-{OS}-{ARCH} read -path remote/path/to/read.bin -output read.bin`
-    1. As a client, to write (send): `tftp-now-{OS}-{ARCH} write -path remote/path/to/write.bin -input write.bin`
+    1. As a client, to read (receive): `tftp-now-{OS}-{ARCH} read -remote remote/path/to/read.bin -local read.bin`
+    1. As a client, to write (send): `tftp-now-{OS}-{ARCH} write -remote remote/path/to/write.bin -local write.bin`
 
 
 # Why
