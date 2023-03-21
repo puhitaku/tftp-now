@@ -72,9 +72,9 @@ Example (serve): start serving on 0.0.0.0:69
   $ tftp-now serve
 
 Example (read): receive '{server root}/dir/foo' from 192.168.1.1 and save it to 'bar'.
-  $ tftp-now read -host 192.168.1.1 -path dir/foo -output bar
+  $ tftp-now read -host 192.168.1.1 -remote dir/foo -local bar
 
 Example (write): send 'bar' to '{server root}/dir/foo' of 192.168.1.1.
-  $ tftp-now write -host 192.168.1.1 -path dir/foo -input bar
+  $ tftp-now write -host 192.168.1.1 -remote dir/foo -local bar
 ```
 
