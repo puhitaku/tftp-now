@@ -17,7 +17,7 @@ func SetRoot(p string) {
 // ReadHandler is called when client starts file download from server
 func ReadHandler(filename string, rf io.ReaderFrom) error {
 	reqID := ulid.Make().String()
-	log.Info().Str("request_id", reqID).Msgf("read request: %s", filename)
+	log.Info().Str("requestId", reqID).Msgf("read request: %s", filename)
 
 	evalPath, err := evaluatePath(filename, root, true)
 	if err != nil {
@@ -44,7 +44,7 @@ func ReadHandler(filename string, rf io.ReaderFrom) error {
 // WriteHandler is called when client starts file upload to server
 func WriteHandler(filename string, wt io.WriterTo) error {
 	reqID := ulid.Make().String()
-	log.Info().Str("request_id", reqID).Msgf("write request: %s", filename)
+	log.Info().Str("requestId", reqID).Msgf("write request: %s", filename)
 
 	evalPath, err := evaluatePath(filename, root, false)
 	if err != nil {
