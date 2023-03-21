@@ -32,6 +32,8 @@ func ReadHandler(filename string, rf io.ReaderFrom) error {
 		log.Error().Str("requestId", reqID).Msgf("failed to open the file: %s", err)
 		return err
 	}
+	defer file.Close()
+
 	n, err := rf.ReadFrom(file)
 	if err != nil {
 		log.Error().Str("requestId", reqID).Msgf("failed to read from the file: %s", err)
@@ -59,6 +61,8 @@ func WriteHandler(filename string, wt io.WriterTo) error {
 		log.Error().Str("requestId", reqID).Msgf("failed to open the file: %s", err)
 		return err
 	}
+	defer file.Close()
+
 	n, err := wt.WriteTo(file)
 	if err != nil {
 		log.Error().Str("requestId", reqID).Msgf("failed to write to the file: %s", err)
