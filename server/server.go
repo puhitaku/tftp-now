@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"io"
 	"os"
 
@@ -15,13 +16,18 @@ func SetRoot(p string) {
 }
 
 // ReadHandler is called when client starts file download from server
-func ReadHandler(filename string, rf io.ReaderFrom) error {
+func ReadHandler(requestedPath string, rf io.ReaderFrom) error {
 	reqID := ulid.Make().String()
-	log.Info().Str("requestId", reqID).Msgf("read request: %s", filename)
+	log.Info().Str("requestId", reqID).Msgf("read request: %s", requestedPath)
 
-	evalPath, err := evaluatePath(filename, root, true)
+	evalPath, err := evaluatePath(requestedPath, root, true)
 	if err != nil {
-		log.Error().Str("requestId", reqID).Msgf("invalid path specified: %s", err)
+		perr := InvalidPathError{}
+		if errors.As(err, &perr) {
+			log.Error().Str("requestId", reqID).EmbedObject(perr).Msgf("failed to evaluate path")
+		} else {
+			log.Error().Str("requestId", reqID).Msgf("failed to evaluate path: %s", err)
+		}
 		return err
 	}
 
@@ -44,13 +50,18 @@ func ReadHandler(filename string, rf io.ReaderFrom) error {
 }
 
 // WriteHandler is called when client starts file upload to server
-func WriteHandler(filename string, wt io.WriterTo) error {
+func WriteHandler(requestedPath string, wt io.WriterTo) error {
 	reqID := ulid.Make().String()
-	log.Info().Str("requestId", reqID).Msgf("write request: %s", filename)
+	log.Info().Str("requestId", reqID).Msgf("write request: %s", requestedPath)
 
-	evalPath, err := evaluatePath(filename, root, false)
+	evalPath, err := evaluatePath(requestedPath, root, false)
 	if err != nil {
-		log.Error().Str("requestId", reqID).Msgf("invalid path specified: %s", err)
+		perr := InvalidPathError{}
+		if errors.As(err, &perr) {
+			log.Error().Str("requestId", reqID).EmbedObject(perr).Msgf("failed to evaluate path")
+		} else {
+			log.Error().Str("requestId", reqID).Msgf("failed to evaluate path: %s", err)
+		}
 		return err
 	}
 
