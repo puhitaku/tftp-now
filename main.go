@@ -133,7 +133,7 @@ func main_() int {
 		host := clientCmd.String("host", "127.0.0.1", "Host address")
 		port := clientCmd.Int("port", 69, "Port number")
 		remote := clientCmd.String("remote", "", "Remote file path to save to (REQUIRED)")
-		local := clientCmd.String("local", "", "Local file path to read from (REQUIRED")
+		local := clientCmd.String("local", "", "Local file path to read from (REQUIRED)")
 
 		if len(os.Args) < 2 {
 			clientCmd.Usage()
