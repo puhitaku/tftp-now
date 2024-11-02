@@ -10,8 +10,8 @@
     - Linux [amd64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-amd64) /
             [arm](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-arm) /
             [arm64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-arm64) /
-            [riscv64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-riscv64)
-            [mipsle](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-mipsle)
+            [riscv64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-riscv64) /
+            [mipsle](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-mipsle) /
             [mips64le](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-mips64le)
     - macOS [amd64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-darwin-amd64) /
             [arm64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-darwin-arm64)
