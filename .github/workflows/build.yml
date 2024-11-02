@@ -35,6 +35,10 @@ jobs:
             goarch: riscv64
           - os: linux
             goarch: arm
+          - os: linux
+            goarch: mipsle
+          - os: linux
+            goarch: mips64le
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
