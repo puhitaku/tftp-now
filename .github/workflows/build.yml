@@ -53,7 +53,7 @@ jobs:
       run: |
         go env
         go version
-        go build -o tftp-now-${{ matrix.os }}-${{ matrix.GOARCH }}${{ matrix.os == 'windows' && '.exe' || '' }} .
+        go build -ldflags='-s -w' -o tftp-now-${{ matrix.os }}-${{ matrix.GOARCH }}${{ matrix.os == 'windows' && '.exe' || '' }} .
     - name: Upload Release Asset
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
