@@ -45,12 +45,13 @@ func main() {
 func main_() int {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).Level(zerolog.InfoLevel)
 
-	if len(os.Args) < 2 {
-		fmt.Print(usage)
-		return 1
+	command := ""
+
+	if len(os.Args) > 1 {
+		command = os.Args[1]
 	}
 
-	switch os.Args[1] {
+	switch command {
 	case "serve":
 		serverCmd := flag.NewFlagSet("tftp-now serve [<options>]", flag.ExitOnError)
 		host := serverCmd.String("host", "0.0.0.0", "Host address")
@@ -180,6 +181,35 @@ func main_() int {
 		}
 
 		log.Info().Int64("length", n).Msgf("successfully sent")
+	case "":
+		if filepath.Base(os.Args[0]) == "tftp-now-serve" {
+			host := "0.0.0.0"
+			port := 69
+			root := "."
+
+			abs, err := filepath.Abs(root)
+			if err != nil {
+				log.Error().Msgf("failed to get the absolute path: %s", err)
+				return 1
+			}
+
+			server.SetRoot(abs)
+			s := tftp.NewServer(server.ReadHandler, server.WriteHandler)
+			s.SetTimeout(5 * time.Second)
+
+			log.Info().Str("host", host).Int("port", port).Str("directory", abs).Msg("starting the TFTP server")
+			err = s.ListenAndServe(fmt.Sprintf("%s:%d", host, port))
+			if err != nil {
+				log.Error().Msgf("failed to run the server: %s", err)
+				return 1
+			}
+		} else {
+			fmt.Print(usage)
+			return 1
+		}
+	case "help":
+		fmt.Print(usage)
+		return 1
 	default:
 		fmt.Println("Invalid command. Use 'serve', 'read', or 'write'")
 		return 1
