@@ -45,12 +45,17 @@ func main() {
 func main_() int {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).Level(zerolog.InfoLevel)
 
-	if len(os.Args) < 2 {
-		fmt.Print(usage)
-		return 1
+	command := "help"
+	options := []string{}
+
+	if len(os.Args) > 1 {
+		command = os.Args[1]
+		options = os.Args[2:]
+	} else if filepath.Base(os.Args[0]) == "tftp-now-serve" {
+		command = "serve"
 	}
 
-	switch os.Args[1] {
+	switch command {
 	case "serve":
 		serverCmd := flag.NewFlagSet("tftp-now serve [<options>]", flag.ExitOnError)
 		host := serverCmd.String("host", "0.0.0.0", "Host address")
@@ -58,7 +63,7 @@ func main_() int {
 		root := serverCmd.String("root", ".", "Root directory path")
 		verbose := serverCmd.Bool("verbose", false, "Enable verbose debug output")
 
-		err := serverCmd.Parse(os.Args[2:])
+		err := serverCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
@@ -91,12 +96,12 @@ func main_() int {
 		remote := clientCmd.String("remote", "", "Remote file path to read from (REQUIRED)")
 		local := clientCmd.String("local", "", "Local file path to save to (REQUIRED)")
 
-		if len(os.Args) < 2 {
+		if len(options) < 2 {
 			clientCmd.Usage()
 			return 1
 		}
 
-		err := clientCmd.Parse(os.Args[2:])
+		err := clientCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
@@ -143,12 +148,12 @@ func main_() int {
 		remote := clientCmd.String("remote", "", "Remote file path to save to (REQUIRED)")
 		local := clientCmd.String("local", "", "Local file path to read from (REQUIRED)")
 
-		if len(os.Args) < 2 {
+		if len(options) < 2 {
 			clientCmd.Usage()
 			return 1
 		}
 
-		err := clientCmd.Parse(os.Args[2:])
+		err := clientCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
@@ -180,6 +185,9 @@ func main_() int {
 		}
 
 		log.Info().Int64("length", n).Msgf("successfully sent")
+	case "help":
+		fmt.Print(usage)
+		return 1
 	default:
 		fmt.Println("Invalid command. Use 'serve', 'read', or 'write'")
 		return 1
