@@ -45,10 +45,14 @@ func main() {
 func main_() int {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).Level(zerolog.InfoLevel)
 
-	command := ""
+	var command string
+	var options []string
 
 	if len(os.Args) > 1 {
 		command = os.Args[1]
+		options = os.Args[2:]
+	} else if filepath.Base(os.Args[0]) == "tftp-now-serve" {
+		command = "serve"
 	}
 
 	switch command {
@@ -59,7 +63,7 @@ func main_() int {
 		root := serverCmd.String("root", ".", "Root directory path")
 		verbose := serverCmd.Bool("verbose", false, "Enable verbose debug output")
 
-		err := serverCmd.Parse(os.Args[2:])
+		err := serverCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
@@ -92,12 +96,12 @@ func main_() int {
 		remote := clientCmd.String("remote", "", "Remote file path to read from (REQUIRED)")
 		local := clientCmd.String("local", "", "Local file path to save to (REQUIRED)")
 
-		if len(os.Args) < 2 {
+		if len(options) < 2 {
 			clientCmd.Usage()
 			return 1
 		}
 
-		err := clientCmd.Parse(os.Args[2:])
+		err := clientCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
@@ -144,12 +148,12 @@ func main_() int {
 		remote := clientCmd.String("remote", "", "Remote file path to save to (REQUIRED)")
 		local := clientCmd.String("local", "", "Local file path to read from (REQUIRED)")
 
-		if len(os.Args) < 2 {
+		if len(options) < 2 {
 			clientCmd.Usage()
 			return 1
 		}
 
-		err := clientCmd.Parse(os.Args[2:])
+		err := clientCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
@@ -181,33 +185,7 @@ func main_() int {
 		}
 
 		log.Info().Int64("length", n).Msgf("successfully sent")
-	case "":
-		if filepath.Base(os.Args[0]) == "tftp-now-serve" {
-			host := "0.0.0.0"
-			port := 69
-			root := "."
-
-			abs, err := filepath.Abs(root)
-			if err != nil {
-				log.Error().Msgf("failed to get the absolute path: %s", err)
-				return 1
-			}
-
-			server.SetRoot(abs)
-			s := tftp.NewServer(server.ReadHandler, server.WriteHandler)
-			s.SetTimeout(5 * time.Second)
-
-			log.Info().Str("host", host).Int("port", port).Str("directory", abs).Msg("starting the TFTP server")
-			err = s.ListenAndServe(fmt.Sprintf("%s:%d", host, port))
-			if err != nil {
-				log.Error().Msgf("failed to run the server: %s", err)
-				return 1
-			}
-		} else {
-			fmt.Print(usage)
-			return 1
-		}
-	case "help":
+	case "", "help":
 		fmt.Print(usage)
 		return 1
 	default:
