@@ -108,7 +108,7 @@ func main_() int {
 		host := clientCmd.String("host", "127.0.0.1", "Host address")
 		port := clientCmd.Int("port", 69, "Port number")
 		remote := clientCmd.String("remote", "", "Remote file path to read from (REQUIRED)")
-		local := clientCmd.String("local", "", "Local file path to save to (REQUIRED)")
+		local := clientCmd.String("local", "", "Local file path to save to (if unspecified, inferred from -remote)")
 
 		if len(options) < 2 {
 			clientCmd.Usage()
@@ -124,9 +124,10 @@ func main_() int {
 		if *remote == "" {
 			log.Error().Msgf("please specify '-remote'")
 			return 1
-		} else if *local == "" {
-			log.Error().Msgf("please specify '-local'")
-			return 1
+		}
+
+		if *local == "" {
+			*local = filepath.Base(*remote)
 		}
 
 		cli, err := tftp.NewClient(fmt.Sprintf("%s:%d", *host, *port))
