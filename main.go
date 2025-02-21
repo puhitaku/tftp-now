@@ -45,18 +45,25 @@ func main() {
 func main_() int {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).Level(zerolog.InfoLevel)
 
-	command := "help"
+	const (
+		serve = "serve"
+		read  = "read"
+		write = "write"
+		help  = "help"
+	)
+
+	command := help
 	options := []string{}
 
 	if len(os.Args) > 1 {
 		command = os.Args[1]
 		options = os.Args[2:]
 	} else if filepath.Base(os.Args[0]) == "tftp-now-serve" {
-		command = "serve"
+		command = serve
 	}
 
 	switch command {
-	case "serve":
+	case serve:
 		serverCmd := flag.NewFlagSet("tftp-now serve [<options>]", flag.ExitOnError)
 		host := serverCmd.String("host", "0.0.0.0", "Host address")
 		port := serverCmd.Int("port", 69, "Port number")
@@ -89,7 +96,7 @@ func main_() int {
 			log.Error().Msgf("failed to run the server: %s", err)
 			return 1
 		}
-	case "read":
+	case read:
 		clientCmd := flag.NewFlagSet("tftp-now read [<options>]", flag.ExitOnError)
 		host := clientCmd.String("host", "127.0.0.1", "Host address")
 		port := clientCmd.Int("port", 69, "Port number")
@@ -141,7 +148,7 @@ func main_() int {
 		}
 
 		log.Info().Int64("length", n).Msgf("successfully received")
-	case "write":
+	case write:
 		clientCmd := flag.NewFlagSet("tftp-now write [<options>]", flag.ExitOnError)
 		host := clientCmd.String("host", "127.0.0.1", "Host address")
 		port := clientCmd.Int("port", 69, "Port number")
@@ -185,7 +192,7 @@ func main_() int {
 		}
 
 		log.Info().Int64("length", n).Msgf("successfully sent")
-	case "help":
+	case help:
 		fmt.Print(usage)
 		return 1
 	default:
