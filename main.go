@@ -189,7 +189,7 @@ func main_() int {
 		fmt.Print(usage)
 		return 1
 	default:
-		fmt.Println("Invalid command. Use 'serve', 'read', or 'write'")
+		fmt.Println("Invalid command. Specify 'serve', 'read', 'write', or 'help'.")
 		return 1
 	}
 
