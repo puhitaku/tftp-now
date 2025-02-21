@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"os"
@@ -13,7 +14,12 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var usage = `
+//go:embed VERSION
+var version string
+
+var usage = fmt.Sprintf(`
+tftp-now %s
+
 Usage of tftp-now:
   tftp-now <command> [<args>]
 
@@ -42,7 +48,7 @@ Tips:
   - If tftp-now executable itself or a link to tftp-now is named "tftp-now-serve",
     tftp-now will start a TFTP server without any explicit subcommand. Please specify
     a subcommand if you want to specify options.
-`
+`, version)[1:]
 
 func main() {
 	os.Exit(main_())
