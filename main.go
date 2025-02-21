@@ -59,6 +59,7 @@ func main_() int {
 		command = os.Args[1]
 		options = os.Args[2:]
 	} else if filepath.Base(os.Args[0]) == "tftp-now-serve" {
+		log.Info().Msgf("tftp-now will start a server since the executable's name is 'tftp-now-serve'")
 		command = serve
 	}
 
