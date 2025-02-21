@@ -36,6 +36,12 @@ Example (read): receive '{server root}/dir/foo' from 192.168.1.1 and save it to 
 
 Example (write): send 'bar' to '{server root}/dir/foo' of 192.168.1.1.
   $ tftp-now write -host 192.168.1.1 -remote dir/foo -local bar
+
+
+Tips:
+  - If tftp-now executable itself or a link to tftp-now is named "tftp-now-serve",
+    tftp-now will start a TFTP server without any explicit subcommand. Please specify
+    a subcommand if you want to specify options.
 `
 
 func main() {
@@ -45,20 +51,33 @@ func main() {
 func main_() int {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout}).Level(zerolog.InfoLevel)
 
-	if len(os.Args) < 2 {
-		fmt.Print(usage)
-		return 1
+	const (
+		serve = "serve"
+		read  = "read"
+		write = "write"
+		help  = "help"
+	)
+
+	command := help
+	options := []string{}
+
+	if len(os.Args) > 1 {
+		command = os.Args[1]
+		options = os.Args[2:]
+	} else if filepath.Base(os.Args[0]) == "tftp-now-serve" {
+		log.Info().Msgf("tftp-now will start a server since the executable's name is 'tftp-now-serve'")
+		command = serve
 	}
 
-	switch os.Args[1] {
-	case "serve":
+	switch command {
+	case serve:
 		serverCmd := flag.NewFlagSet("tftp-now serve [<options>]", flag.ExitOnError)
 		host := serverCmd.String("host", "0.0.0.0", "Host address")
 		port := serverCmd.Int("port", 69, "Port number")
 		root := serverCmd.String("root", ".", "Root directory path")
 		verbose := serverCmd.Bool("verbose", false, "Enable verbose debug output")
 
-		err := serverCmd.Parse(os.Args[2:])
+		err := serverCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
@@ -84,19 +103,19 @@ func main_() int {
 			log.Error().Msgf("failed to run the server: %s", err)
 			return 1
 		}
-	case "read":
+	case read:
 		clientCmd := flag.NewFlagSet("tftp-now read [<options>]", flag.ExitOnError)
 		host := clientCmd.String("host", "127.0.0.1", "Host address")
 		port := clientCmd.Int("port", 69, "Port number")
 		remote := clientCmd.String("remote", "", "Remote file path to read from (REQUIRED)")
-		local := clientCmd.String("local", "", "Local file path to save to (REQUIRED)")
+		local := clientCmd.String("local", "", "Local file path to save to (if unspecified, inferred from -remote)")
 
-		if len(os.Args) < 2 {
+		if len(options) < 2 {
 			clientCmd.Usage()
 			return 1
 		}
 
-		err := clientCmd.Parse(os.Args[2:])
+		err := clientCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
@@ -105,10 +124,13 @@ func main_() int {
 		if *remote == "" {
 			log.Error().Msgf("please specify '-remote'")
 			return 1
-		} else if *local == "" {
-			log.Error().Msgf("please specify '-local'")
-			return 1
 		}
+
+		if *local == "" {
+			*local = filepath.Base(*remote)
+		}
+
+		log.Info().Str("host", fmt.Sprintf("%s:%d", *host, *port)).Str("remote", *remote).Str("local", *local).Msgf("start reading")
 
 		cli, err := tftp.NewClient(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
@@ -124,7 +146,7 @@ func main_() int {
 
 		file, err := os.Create(*local)
 		if err != nil {
-			log.Error().Msgf("failed to open '%s' to write: %s", *local, err)
+			log.Error().Msgf(err.Error())
 			return 1
 		}
 		defer file.Close()
@@ -136,30 +158,40 @@ func main_() int {
 		}
 
 		log.Info().Int64("length", n).Msgf("successfully received")
-	case "write":
+	case write:
 		clientCmd := flag.NewFlagSet("tftp-now write [<options>]", flag.ExitOnError)
 		host := clientCmd.String("host", "127.0.0.1", "Host address")
 		port := clientCmd.Int("port", 69, "Port number")
 		remote := clientCmd.String("remote", "", "Remote file path to save to (REQUIRED)")
 		local := clientCmd.String("local", "", "Local file path to read from (REQUIRED)")
 
-		if len(os.Args) < 2 {
+		if len(options) < 2 {
 			clientCmd.Usage()
 			return 1
 		}
 
-		err := clientCmd.Parse(os.Args[2:])
+		err := clientCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
 			return 1
 		}
 
+		if *remote == "" {
+			log.Error().Msgf("please specify '-remote'")
+			return 1
+		} else if *local == "" {
+			log.Error().Msgf("please specify '-local'")
+			return 1
+		}
+
 		file, err := os.Open(*local)
 		if err != nil {
-			log.Error().Msgf("failed to open '%s' to write: %s", *local, err)
+			log.Error().Msgf(err.Error())
 			return 1
 		}
 		defer file.Close()
+
+		log.Info().Str("host", fmt.Sprintf("%s:%d", *host, *port)).Str("remote", *remote).Str("local", *local).Msgf("start writing")
 
 		cli, err := tftp.NewClient(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
@@ -180,8 +212,11 @@ func main_() int {
 		}
 
 		log.Info().Int64("length", n).Msgf("successfully sent")
+	case help:
+		fmt.Print(usage)
+		return 1
 	default:
-		fmt.Println("Invalid command. Use 'serve', 'read', or 'write'")
+		fmt.Println("Invalid command. Specify 'serve', 'read', 'write', or 'help'.")
 		return 1
 	}
 
