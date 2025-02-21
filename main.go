@@ -36,6 +36,12 @@ Example (read): receive '{server root}/dir/foo' from 192.168.1.1 and save it to 
 
 Example (write): send 'bar' to '{server root}/dir/foo' of 192.168.1.1.
   $ tftp-now write -host 192.168.1.1 -remote dir/foo -local bar
+
+
+Tips:
+  - If tftp-now executable itself or a link to tftp-now is named "tftp-now-serve",
+    tftp-now will start a TFTP server without any explicit subcommand. Please specify
+    a subcommand if you want to specify options.
 `
 
 func main() {
