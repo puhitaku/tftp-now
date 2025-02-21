@@ -174,6 +174,14 @@ func main_() int {
 			return 1
 		}
 
+		if *remote == "" {
+			log.Error().Msgf("please specify '-remote'")
+			return 1
+		} else if *local == "" {
+			log.Error().Msgf("please specify '-local'")
+			return 1
+		}
+
 		file, err := os.Open(*local)
 		if err != nil {
 			log.Error().Msgf("failed to open '%s' to write: %s", *local, err)
