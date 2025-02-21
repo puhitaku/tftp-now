@@ -130,6 +130,8 @@ func main_() int {
 			*local = filepath.Base(*remote)
 		}
 
+		log.Info().Str("host", fmt.Sprintf("%s:%d", *host, *port)).Str("remote", *remote).Str("local", *local).Msgf("start reading")
+
 		cli, err := tftp.NewClient(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
 			log.Error().Msgf("failed to create a new client: %s", err)
@@ -144,7 +146,7 @@ func main_() int {
 
 		file, err := os.Create(*local)
 		if err != nil {
-			log.Error().Msgf("failed to open '%s' to write: %s", *local, err)
+			log.Error().Msgf(err.Error())
 			return 1
 		}
 		defer file.Close()
@@ -184,10 +186,12 @@ func main_() int {
 
 		file, err := os.Open(*local)
 		if err != nil {
-			log.Error().Msgf("failed to open '%s' to write: %s", *local, err)
+			log.Error().Msgf(err.Error())
 			return 1
 		}
 		defer file.Close()
+
+		log.Info().Str("host", fmt.Sprintf("%s:%d", *host, *port)).Str("remote", *remote).Str("local", *local).Msgf("start writing")
 
 		cli, err := tftp.NewClient(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
