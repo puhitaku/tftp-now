@@ -48,6 +48,8 @@ Tips:
   - If tftp-now executable itself or a link to tftp-now is named "tftp-now-serve",
     tftp-now will start a TFTP server without any explicit subcommand. Please specify
     a subcommand if you want to specify options.
+  - The block size for the server will be clamped to the smaller of the block size
+    a client requests and the MTU (minus overhead) of the interface.
 `, version)[1:]
 
 func main() {
@@ -75,17 +77,33 @@ func main_() int {
 		command = serve
 	}
 
+	// validateBlockSize validates the block size.
+	// While RFC 2348 defines that block size must be between 8 and 65464,
+	// pin/tftp will not accept and silently ignores the length less than 512 Bytes.
+	validateBlockSize := func(l int) (valid bool) {
+		valid = 512 <= l && l <= 65464
+		if !valid {
+			log.Error().Msgf("block size must be between 512 and 65464")
+		}
+		return
+	}
+
 	switch command {
 	case serve:
 		serverCmd := flag.NewFlagSet("tftp-now serve [<options>]", flag.ExitOnError)
 		host := serverCmd.String("host", "0.0.0.0", "Host address")
 		port := serverCmd.Int("port", 69, "Port number")
 		root := serverCmd.String("root", ".", "Root directory path")
+		blkSize := serverCmd.Int("blksize", 512, "Block size")
 		verbose := serverCmd.Bool("verbose", false, "Enable verbose debug output")
 
 		err := serverCmd.Parse(options)
 		if err != nil {
 			log.Error().Msgf("failed to parse args: %s", err)
+			return 1
+		}
+
+		if !validateBlockSize(*blkSize) {
 			return 1
 		}
 
@@ -101,9 +119,10 @@ func main_() int {
 
 		server.SetRoot(abs)
 		s := tftp.NewServer(server.ReadHandler, server.WriteHandler)
+		s.SetBlockSize(*blkSize)
 		s.SetTimeout(5 * time.Second)
 
-		log.Info().Str("host", *host).Int("port", *port).Str("directory", abs).Msg("starting the TFTP server")
+		log.Info().Str("host", *host).Int("port", *port).Str("directory", abs).Int("blocksize", *blkSize).Msg("starting the TFTP server")
 		err = s.ListenAndServe(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
 			log.Error().Msgf("failed to run the server: %s", err)
@@ -115,6 +134,7 @@ func main_() int {
 		port := clientCmd.Int("port", 69, "Port number")
 		remote := clientCmd.String("remote", "", "Remote file path to read from (REQUIRED)")
 		local := clientCmd.String("local", "", "Local file path to save to (if unspecified, inferred from -remote)")
+		blkSize := clientCmd.Int("blksize", 512, "Block size")
 
 		if len(options) < 2 {
 			clientCmd.Usage()
@@ -136,13 +156,19 @@ func main_() int {
 			*local = filepath.Base(*remote)
 		}
 
-		log.Info().Str("host", fmt.Sprintf("%s:%d", *host, *port)).Str("remote", *remote).Str("local", *local).Msgf("start reading")
+		if !validateBlockSize(*blkSize) {
+			return 1
+		}
+
+		log.Info().Str("host", fmt.Sprintf("%s:%d", *host, *port)).Str("remote", *remote).Str("local", *local).Int("blocksize", *blkSize).Msgf("start reading")
 
 		cli, err := tftp.NewClient(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
 			log.Error().Msgf("failed to create a new client: %s", err)
 			return 1
 		}
+
+		cli.SetBlockSize(*blkSize)
 
 		tf, err := cli.Receive(*remote, "octet")
 		if err != nil {
@@ -152,7 +178,7 @@ func main_() int {
 
 		file, err := os.Create(*local)
 		if err != nil {
-			log.Error().Msgf(err.Error())
+			log.Error().Msg(err.Error())
 			return 1
 		}
 		defer file.Close()
@@ -170,6 +196,7 @@ func main_() int {
 		port := clientCmd.Int("port", 69, "Port number")
 		remote := clientCmd.String("remote", "", "Remote file path to save to (REQUIRED)")
 		local := clientCmd.String("local", "", "Local file path to read from (REQUIRED)")
+		blkSize := clientCmd.Int("blksize", 512, "Block size")
 
 		if len(options) < 2 {
 			clientCmd.Usage()
@@ -192,18 +219,24 @@ func main_() int {
 
 		file, err := os.Open(*local)
 		if err != nil {
-			log.Error().Msgf(err.Error())
+			log.Error().Msg(err.Error())
 			return 1
 		}
 		defer file.Close()
 
-		log.Info().Str("host", fmt.Sprintf("%s:%d", *host, *port)).Str("remote", *remote).Str("local", *local).Msgf("start writing")
+		if !validateBlockSize(*blkSize) {
+			return 1
+		}
+
+		log.Info().Str("host", fmt.Sprintf("%s:%d", *host, *port)).Str("remote", *remote).Str("local", *local).Int("blocksize", *blkSize).Msgf("start writing")
 
 		cli, err := tftp.NewClient(fmt.Sprintf("%s:%d", *host, *port))
 		if err != nil {
 			log.Error().Msgf("failed to create a new client: %s", err)
 			return 1
 		}
+
+		cli.SetBlockSize(*blkSize)
 
 		rf, err := cli.Send(*remote, "octet")
 		if err != nil {
