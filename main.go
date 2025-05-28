@@ -152,7 +152,7 @@ func main_() int {
 
 		file, err := os.Create(*local)
 		if err != nil {
-			log.Error().Msgf(err.Error())
+			log.Error().Msg(err.Error())
 			return 1
 		}
 		defer file.Close()
@@ -192,7 +192,7 @@ func main_() int {
 
 		file, err := os.Open(*local)
 		if err != nil {
-			log.Error().Msgf(err.Error())
+			log.Error().Msg(err.Error())
 			return 1
 		}
 		defer file.Close()
