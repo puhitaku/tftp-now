@@ -2,10 +2,10 @@ package main_test
 
 import (
 	"bytes"
+	"crypto/rand"
 	"net"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/pin/tftp/v3"
 	"github.com/puhitaku/tftp-now/server"
@@ -38,40 +38,68 @@ func TestWriteRead(t *testing.T) {
 		return svr.Serve(conn)
 	})
 
-	time.Sleep(100 * time.Millisecond)
-
 	cli, err := tftp.NewClient(addr)
 	if err != nil {
 		t.Fatalf("failed to create a client: %s", err)
 	}
 
-	rf, err := cli.Send("testfile", "octet")
-	if err != nil {
-		t.Fatalf("failed to start sending: %s", err)
-	}
-
 	defer os.Remove("testfile")
 
-	body := []byte{0, 1, 2, 3}
-	readBuf := bytes.NewBuffer(body)
-	_, err = rf.ReadFrom(readBuf)
-	if err != nil {
-		t.Fatalf("failed to send: %s", err)
+	const (
+		blockLenDefault = 512
+		blockLenFitMTU  = 1428 // From RFC 2348. MTU 1500 - 72
+		blockLenJumbo   = 8928 // Jumbo frame. MTU 9000 - 72
+	)
+
+	conditions := []struct {
+		Name           string
+		ClientBlockLen int
+		ServerBlockLen int
+	}{
+		{Name: "C=default,S=default", ClientBlockLen: blockLenDefault, ServerBlockLen: blockLenDefault},
+		{Name: "C=default,S=fit MTU", ClientBlockLen: blockLenDefault, ServerBlockLen: blockLenFitMTU},
+		{Name: "C=default,S=jumbo", ClientBlockLen: blockLenDefault, ServerBlockLen: blockLenJumbo},
+		{Name: "C=fit MTU,S=default", ClientBlockLen: blockLenFitMTU, ServerBlockLen: blockLenDefault},
+		{Name: "C=fit MTU,S=fit MTU", ClientBlockLen: blockLenFitMTU, ServerBlockLen: blockLenFitMTU},
+		{Name: "C=fit MTU,S=jumbo", ClientBlockLen: blockLenFitMTU, ServerBlockLen: blockLenJumbo},
+		{Name: "C=jumbo,S=default", ClientBlockLen: blockLenJumbo, ServerBlockLen: blockLenDefault},
+		{Name: "C=jumbo,S=fit MTU", ClientBlockLen: blockLenJumbo, ServerBlockLen: blockLenFitMTU},
+		{Name: "C=jumbo,S=jumbo", ClientBlockLen: blockLenJumbo, ServerBlockLen: blockLenJumbo},
 	}
 
-	wt, err := cli.Receive("testfile", "octet")
-	if err != nil {
-		t.Fatalf("failed to start receiving: %s", err)
-	}
+	for _, condition := range conditions {
+		t.Run(condition.Name, func(t *testing.T) {
+			svr.SetBlockSize(condition.ServerBlockLen)
+			cli.SetBlockSize(condition.ClientBlockLen)
 
-	writeBuf := bytes.NewBuffer(nil)
-	_, err = wt.WriteTo(writeBuf)
-	if err != nil {
-		t.Fatalf("failed to receive: %s", err)
-	}
+			rf, err := cli.Send("testfile", "octet")
+			if err != nil {
+				t.Fatalf("failed to start sending: %s", err)
+			}
 
-	if b := writeBuf.Bytes(); !bytes.Equal(body, b) {
-		t.Errorf("received data differ, expect: %+v actual: %+v", body, b)
+			body := make([]byte, 65536) // Covers the TFTP's block size max limit 65464
+			_, _ = rand.Read(body)
+			_, err = rf.ReadFrom(bytes.NewReader(body))
+			if err != nil {
+				t.Fatalf("failed to send: %s", err)
+			}
+			defer os.Remove("testfile")
+
+			wt, err := cli.Receive("testfile", "octet")
+			if err != nil {
+				t.Fatalf("failed to start receiving: %s", err)
+			}
+
+			writeBuf := bytes.NewBuffer(nil)
+			_, err = wt.WriteTo(writeBuf)
+			if err != nil {
+				t.Fatalf("failed to receive: %s", err)
+			}
+
+			if b := writeBuf.Bytes(); !bytes.Equal(body, b) {
+				t.Errorf("received data differ, expect: %+v actual: %+v", body, b)
+			}
+		})
 	}
 
 	svr.Shutdown()
