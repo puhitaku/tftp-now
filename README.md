@@ -15,6 +15,7 @@
             [mips64le](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-linux-mips64le)
     - macOS [amd64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-darwin-amd64) /
             [arm64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-darwin-arm64)
+       - You can also install tftp-now using Homebrew: `brew install tftp-now`
     - Windows [amd64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-windows-amd64.exe) /
               [arm64](https://github.com/puhitaku/tftp-now/releases/latest/download/tftp-now-windows-arm64.exe)
 
